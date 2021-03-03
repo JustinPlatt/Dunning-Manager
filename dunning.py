@@ -7,8 +7,6 @@ Created on Thu Feb 11 16:54:40 2021
 
 import glob
 import os
-from pathlib import Path
-from pdfreader import PDFDocument, SimplePDFViewer
 import pandas as pd
 import PyPDF2
 import re
@@ -32,13 +30,19 @@ ord_regex = re.compile(r"""
 
 get_fname = re.compile(r'\d[\d_]+')  # pulls unique part of filename
 
-ON_NETWORK = False
+ON_NETWORK = False  # change the paths used based on whether we're on network
 
 if ON_NETWORK:
-    ERT_PATH = r'\\fs1.bgeltd.com\Proc\ERT_Reports\PR\ECS\PDF\\'
+    ERT_PATH = r'//fs1.bgeltd.com/Proc/ERT_Reports/PR/ECS/PDF/'
+    DATA_PATH = os.getcwd()  # add N drive data path
+    PDF_PATH = os.getcwd()  # add N drive pdf path
+    VOD_PATH = os.getcwd()  # add N drive vod path
 else:
-    ERT_PATH = ''
-DATA_PATH = os.getcwd()
+    ERT_PATH = './ert/'
+    DATA_PATH = './data/'
+    PDF_PATH = './pdfs/'
+    VOD_PATH = './vods/'
+DATA_FILE = DATA_PATH + 'data.csv'
 
 
 def get_file_list():
@@ -50,8 +54,8 @@ def get_file_list():
         Contains all unique values of the FILE column.
         Returns [] if data.csv doesn't exist
     """
-    if os.path.isfile('./data.csv'):  # leading dot indicates relative import
-        cur_data = pd.read_csv('data.csv', sep='|', dtype={'ORDER_ID': str})
+    if os.path.isfile(DATA_FILE):
+        cur_data = pd.read_csv(DATA_FILE, sep='|', dtype={'ORDER_ID': str})
         file_list = cur_data['FILE'].unique()
     else:
         file_list = []
@@ -125,12 +129,12 @@ def get_order():
 
 
 def find_order():
-    if os.path.isfile('./data.csv'):  # placeholder for now
+    if os.path.isfile(DATA_FILE):  # placeholder for now
         ord_num = get_order()
         if ord_num in ('b', 'B'):
             print('Returning to main menu...')
         else:
-            df = pd.read_csv('data.csv', sep='|', dtype={'ORDER_ID': str})
+            df = pd.read_csv(DATA_FILE, sep='|', dtype={'ORDER_ID': str})
             matches = df[df['ORDER_ID'] == ord_num]
             match_ct = matches['DUNNING_NUM'].count()
             if match_ct == 0:
