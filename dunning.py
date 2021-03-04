@@ -11,6 +11,7 @@ import pandas as pd
 import PyPDF2
 import re
 from re import sub
+import shutil
 import sys
 import warnings
 
@@ -159,17 +160,17 @@ def find_order():
 
 
 def print_order(file, start_page, order_id, num):
-    full_file = ERT_PATH + 'BGE_DUNNING_' + file +'.DP.pdf'
+    full_file = PDF_PATH + 'BGE_DUNNING_' + file +'.DP.pdf'
     d_pdf = open(full_file, 'rb')
     pdf_reader = PyPDF2.PdfFileReader(d_pdf, strict=False, warndest=None)
     pdf_writer = PyPDF2.PdfFileWriter()
     for page in range(start_page-1, start_page+1):
         pdf_writer.addPage(pdf_reader.getPage(page))
     output_filename = 'DUNNING-{}-INV_{}.pdf'.format(order_id, str(num))
-    with open(output_filename, 'wb') as out:
+    with open(VOD_PATH + output_filename, 'wb') as out:
         pdf_writer.write(out)
     d_pdf.close()
-    print('SAVED AS ' + output_filename)
+    print('SAVED AS ' + os.path.abspath(VOD_PATH + output_filename))
 
 
 def import_pdf(pdf_to_open):
@@ -195,17 +196,18 @@ def import_pdf(pdf_to_open):
         else:
             print('check page ' + str(page_num))
     d_pdf.close()
+    shutil.copy(ERT_PATH + pdf_to_open, PDF_PATH)
     data_cols = ['ORDER_ID', 'PROD10', 'CUST_ID', 'DUNNING_NUM', 'ITEM_NAME', 'TOTAL_DUE', 'FILE', 'PAGE']
     data_inv = pd.DataFrame(data=data_tmp, columns=data_cols)
     data_inv['TOTAL_DUE'] = data_inv['TOTAL_DUE'].astype(float)
-    if os.path.isfile('./data.csv'):  #look for data.csv - the . is for current dir
+    if os.path.isfile(DATA_FILE):  # look for data.csv - the . is for current dir
         print('Appending to data.csv')
-        prior_data = pd.read_csv('data.csv', sep='|', dtype={'ORDER_ID': str})
+        prior_data = pd.read_csv(DATA_FILE, sep='|', dtype={'ORDER_ID': str})
         data_inv = prior_data.append(data_inv)
     else:
         print('No data.csv file found.  Creating now.')
-    data_inv.to_csv('data.csv', index=False, sep='|')
-    print('Done.')
+    data_inv.to_csv(DATA_FILE, index=False, sep='|')
+    print('Done.  Files copied to ' + os.path.abspath(PDF_PATH))
 
 
 def import_check():
@@ -235,7 +237,6 @@ def import_check():
         if import_choice == 'n':
             print('Returning to main menu...')
         else:
-            print('This is where we will import everything')
             for file_name in to_import:
                 print('Importing '+file_name)
                 import_pdf(file_name)
@@ -248,7 +249,6 @@ def main():
         choice = get_choice()
         if choice == 'i':               # import pdfs
             import_check()
-            #import_pdfs(file_list)
         elif choice == 'o':             # find an order
             find_order()
         elif choice == 'q':             # import pdfs
