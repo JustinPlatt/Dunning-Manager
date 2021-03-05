@@ -63,42 +63,6 @@ def get_file_list():
     return file_list
 
 
-def get_file():
-    """Create a numbered list of all pdf files in the folder,
-    then prompt user to pick one.
-
-    This should probably find all the pdfs that match some regex
-    and aren't already in file_list.  Or choose to import one/all
-
-    Returns
-    -------
-    pdf_to_open : string
-        Returns the file name including the .pdf extension
-
-    """
-    print('Showing PDF files in ' + os.getcwd())
-    files = []
-    f_count = 0
-    for file in os.listdir(ERT_PATH):
-        if file.endswith(".pdf") or file.endswith(".PDF"):
-            f_name = file.rsplit('.', maxsplit=1)[0]
-            print('(' + str(f_count) + ')  ' + file)
-            files.append(f_name)  # take the file name w/o the .pdf
-            f_count += 1
-    prompt = '\nEnter the number corresponding to the target pdf, or q to quit: '
-    choice = input(prompt)
-    while not is_valid(choice, f_count):
-        if choice == 'q':
-            print('Quitting.')
-            sys.exit()
-        else:
-            print('Invalid choice - try again.')
-            choice = input(prompt)
-    if choice != 'q':
-        pdf_to_open = str(files[int(choice)]) + '.pdf'
-        return pdf_to_open
-
-
 def is_valid(choice, file_ct):
     """Check if the report choice is a valid one"""
     x = False
