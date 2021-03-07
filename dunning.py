@@ -63,15 +63,6 @@ def get_file_list():
     return file_list
 
 
-def is_valid(choice, file_ct):
-    """Check if the report choice is a valid one"""
-    x = False
-    if choice.isnumeric():
-        if int(choice) in range(file_ct):
-            x = True
-    return x
-
-
 def get_choice():
     menu_prompt = 'Choose one: [I]mport pdf / [O]rder search / [Q]uit:  '
     menu_choice = input(menu_prompt).lower()
@@ -99,38 +90,41 @@ def find_order():
         if ord_num in ('b', 'B'):
             print('Returning to main menu...')
         else:
-            df = pd.read_csv(DATA_FILE, sep='|', dtype={'ORDER_ID': str})
-            matches = df[df['ORDER_ID'] == ord_num]
-            match_ct = matches['DUNNING_NUM'].count()
+            matches = pd.read_csv(
+                DATA_FILE, sep='|',
+                usecols=['ORDER_ID', 'DUNNING_NUM', 'FILE', 'PAGE'],
+                dtype={'ORDER_ID': str})
+            
+            matches = matches[matches['ORDER_ID'] == ord_num]
+            match_ct = len(matches)
             if match_ct == 0:
                 print('No matches found.')
             elif match_ct == 1:
                 file = matches['FILE'].values[0]
                 start_page = matches['PAGE'].values[0]
-                print('1 match found:')
-                print(matches.to_string(index=False))
-                print('Printing dunning invoice.')
+                print('1 match found - printing invoice')
                 print_order(file, start_page, ord_num,1)
             else:
-                print(str(match_ct) + ' matches found:')
-                print(matches.to_string(index=False))
-                for a in range(match_ct):
-                    print('Printing match ' + str(a+1) + ' of ' + str(match_ct))
-                    file = matches['FILE'].values[a]
-                    start_page = matches['PAGE'].values[a]
-                    print_order(file, start_page, ord_num, a+1)
+                print(str(match_ct) + ' matches found - printing newest invoice')
+                matches['FILE_DATE'] = matches['FILE'].str.extract(r'_(\d{8})_').astype(int)
+                newest_match_data = list(matches.sort_values(by=['FILE_DATE', 'DUNNING_NUM'], ascending=False).iloc[0])
+                file = newest_match_data[2]
+                start_page = newest_match_data[3]
+                ord_num = newest_match_data[0]
+                #items = [order, dunning, file, page, file_date]
+                print_order(file, start_page, ord_num)
     else:
         print('No data.csv file found.  Import some data.')
 
 
-def print_order(file, start_page, order_id, num):
-    full_file = PDF_PATH + 'BGE_DUNNING_' + file +'.DP.pdf'
+def print_order(file, start_page, order_id):
+    full_file = PDF_PATH + 'BGE_DUNNING_' + file + '.DP.pdf'
     d_pdf = open(full_file, 'rb')
     pdf_reader = PyPDF2.PdfFileReader(d_pdf, strict=False, warndest=None)
     pdf_writer = PyPDF2.PdfFileWriter()
     for page in range(start_page-1, start_page+1):
         pdf_writer.addPage(pdf_reader.getPage(page))
-    output_filename = 'DUNNING-{}-INV_{}.pdf'.format(order_id, str(num))
+    output_filename = 'DUNNING-ORDER_{}.pdf'.format(order_id)
     with open(VOD_PATH + output_filename, 'wb') as out:
         pdf_writer.write(out)
     d_pdf.close()
