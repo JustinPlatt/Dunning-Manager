@@ -31,18 +31,16 @@ ord_regex = re.compile(r"""
 
 get_fname = re.compile(r'\d[\d_]+')  # pulls unique part of filename
 
-ON_NETWORK = False  # change the paths used based on whether we're on network
+ON_NETWORK = True  # change the paths used based on whether we're on network
 
 if ON_NETWORK:
     ERT_PATH = r'//fs1.bgeltd.com/Proc/ERT_Reports/PR/ECS/PDF/'
-    DATA_PATH = os.getcwd()  # add N drive data path
-    PDF_PATH = os.getcwd()  # add N drive pdf path
-    VOD_PATH = os.getcwd()  # add N drive vod path
 else:
     ERT_PATH = './ert/'
-    DATA_PATH = './data/'
-    PDF_PATH = './pdfs/'
-    VOD_PATH = './vods/'
+
+DATA_PATH = './data/'
+PDF_PATH = './pdfs/'
+VOD_PATH = './vods/'
 DATA_FILE = DATA_PATH + 'data.csv'
 
 
