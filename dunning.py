@@ -13,12 +13,23 @@ import re
 from re import sub
 import shutil
 import sys
-import warnings
 
-warnings.filterwarnings("ignore", category=FutureWarning)
+ON_NETWORK = False  # change the paths used based on whether we're on network
+LAST_UPDATED = '3/8/2021'
 
-#  "globals"
-ord_regex = re.compile(r"""
+if ON_NETWORK:
+    ERT_PATH = r'//fs1.bgeltd.com/Proc/ERT_Reports/PR/ECS/PDF/'
+else:
+    ERT_PATH = './ert/'
+
+DATA_PATH = './data/'
+PDF_PATH = './pdfs/'
+VOD_PATH = './vods/'
+DATA_FILE = DATA_PATH + 'data.csv'
+
+
+# regex patterns
+invoice_regex = re.compile(r"""
     (\d{2}-\d{5}-\d{3})-        #group 0 - PROD10
     (\d{3})                     #group 1 - DUNNING_NUM
     .+"([^"]+)"                 #group 2 = ITEM_NAME
@@ -31,17 +42,7 @@ ord_regex = re.compile(r"""
 
 get_fname = re.compile(r'\d[\d_]+')  # pulls unique part of filename
 
-ON_NETWORK = True  # change the paths used based on whether we're on network
-
-if ON_NETWORK:
-    ERT_PATH = r'//fs1.bgeltd.com/Proc/ERT_Reports/PR/ECS/PDF/'
-else:
-    ERT_PATH = './ert/'
-
-DATA_PATH = './data/'
-PDF_PATH = './pdfs/'
-VOD_PATH = './vods/'
-DATA_FILE = DATA_PATH + 'data.csv'
+order_regex = re.compile(r'\d{15}|[bB]')  # find a 15 digit number, 'b' or 'B'
 
 
 def get_file_list():
@@ -61,29 +62,28 @@ def get_file_list():
     return file_list
 
 
-def get_choice():
+def get_menu_choice():
     menu_prompt = 'Choose one: [I]mport pdf / [O]rder search / [Q]uit:  '
-    menu_choice = input(menu_prompt).lower()
-    while menu_choice not in ('i', 'o', 'q'):
+    menu_input = input(menu_prompt).lower()
+    while menu_input not in ('i', 'o', 'q'):
         print('\nInvalid choice!')
-        menu_choice = input(menu_prompt).lower()
-    return menu_choice
+        menu_input = input(menu_prompt).lower()
+    return menu_input
 
 
 def get_order():
-    ord_regex = re.compile(r'\d{15}|[bB]')  # find a 15 digit number, 'b' or 'B'
-    ord_prompt = '\nEnter a 15 digit order id, or [B] to go back:  '
-    ord_choice = input(ord_prompt)
-    while not ord_regex.search(ord_choice):
+    order_prompt = '\nEnter a 15 digit order id, or [B] to go back:  '
+    order_input = input(order_prompt)
+    while not order_regex.search(order_input):
         print('\nInvalid choice!')
-        ord_choice = input(ord_prompt)
-        if ord_choice in ('b', 'B'):
+        order_input = input(order_prompt)
+        if order_input in ('b', 'B'):
             break
-    return str(ord_choice)
+    return str(order_input)
 
 
 def find_order():
-    if os.path.isfile(DATA_FILE):  # placeholder for now
+    if os.path.isfile(DATA_FILE):
         ord_num = get_order()
         if ord_num in ('b', 'B'):
             print('Returning to main menu...')
@@ -144,8 +144,8 @@ def import_pdf(pdf_to_open):
         if page_num % 1000 == 0:
             print('Processing page ' + str(page_num) + ' of ' + str(page_ct))
         page_txt = pdfReader.getPage(page_num).extractText()
-        if ord_regex.search(page_txt):
-            gps = ord_regex.search(page_txt).groups()
+        if invoice_regex.search(page_txt):
+            gps = invoice_regex.search(page_txt).groups()
             new_row = [gps[5]+gps[6], gps[0], gps[4], gps[1], gps[2],
                        sub(r'[^\d.]', '', gps[3]), fname, page_num+1]
             data_tmp.append(new_row)
@@ -163,7 +163,7 @@ def import_pdf(pdf_to_open):
     else:
         print('No data.csv file found.  Creating now.')
     data_inv.to_csv(DATA_FILE, index=False, sep='|')
-    print('Done.  Files copied to ' + os.path.abspath(PDF_PATH))
+    print('Done.  File copied to ' + os.path.abspath(PDF_PATH))
 
 
 def import_check():
@@ -200,9 +200,9 @@ def import_check():
 
 
 def main():
-    print('DUNNING INVOICE MANAGER - LAST UPDATED 2/28/2021')
+    print('DUNNING INVOICE MANAGER - LAST UPDATED ' + LAST_UPDATED)
     while True:
-        choice = get_choice()
+        choice = get_menu_choice()
         if choice == 'i':               # import pdfs
             import_check()
         elif choice == 'o':             # find an order
