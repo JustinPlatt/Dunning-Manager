@@ -101,7 +101,7 @@ def find_order():
                 file = matches['FILE'].values[0]
                 start_page = matches['PAGE'].values[0]
                 print('1 match found - printing invoice')
-                print_order(file, start_page, ord_num,1)
+                print_order(file, start_page, ord_num)
             else:
                 print(str(match_ct) + ' matches found - printing newest invoice')
                 matches['FILE_DATE'] = matches['FILE'].str.extract(r'_(\d{8})_').astype(int)
