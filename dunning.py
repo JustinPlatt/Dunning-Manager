@@ -101,7 +101,7 @@ def find_order():
                 file = matches['FILE'].values[0]
                 start_page = matches['PAGE'].values[0]
                 print('1 match found - printing invoice')
-                print_order(file, start_page, ord_num,1)
+                print_order(file, start_page, ord_num)
             else:
                 print(str(match_ct) + ' matches found - printing newest invoice')
                 matches['FILE_DATE'] = matches['FILE'].str.extract(r'_(\d{8})_').astype(int)
@@ -116,6 +116,23 @@ def find_order():
 
 
 def print_order(file, start_page, order_id):
+    """Saves an order invoice as a pdf
+
+    
+
+    Parameters
+    ----------
+    file_loc : str
+        The file location of the spreadsheet
+    print_cols : bool, optional
+        A flag used to print the columns to the console (default is
+        False)
+
+    Returns
+    -------
+    list
+        a list of strings used that are the header columns
+    """
     full_file = PDF_PATH + 'BGE_DUNNING_' + file + '.DP.pdf'
     d_pdf = open(full_file, 'rb')
     pdf_reader = PyPDF2.PdfFileReader(d_pdf, strict=False, warndest=None)
@@ -144,12 +161,12 @@ def import_pdf(pdf_to_open):
         if page_num % 1000 == 0:
             print('Processing page ' + str(page_num) + ' of ' + str(page_ct))
         page_txt = pdfReader.getPage(page_num).extractText()
-        if invoice_regex.search(page_txt):
+        try:
             gps = invoice_regex.search(page_txt).groups()
             new_row = [gps[5]+gps[6], gps[0], gps[4], gps[1], gps[2],
                        sub(r'[^\d.]', '', gps[3]), fname, page_num+1]
             data_tmp.append(new_row)
-        else:
+        except (AttributeError):
             print('check page ' + str(page_num))
     d_pdf.close()
     shutil.copy(ERT_PATH + pdf_to_open, PDF_PATH)
