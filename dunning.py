@@ -42,7 +42,9 @@ invoice_regex = re.compile(r"""
 
 get_fname = re.compile(r'\d[\d_]+')  # pulls unique part of filename
 
-order_regex = re.compile(r'\d{15}|[bB]')  # find a 15 digit number, 'b' or 'B'
+order_regex = re.compile(r'^\d{15}$|^[bB]$')  # find 15 digit , 'b' or 'B'
+
+menu_regex = re.compile(r'^[ioqIOQ]$')  # find i/o/q in upper/lower case
 
 
 def get_file_list():
@@ -63,9 +65,17 @@ def get_file_list():
 
 
 def get_menu_choice():
+    """Get main menu choice from user
+
+    Returns
+    -------
+    menu_input : str
+        Returns 'i', 'o', or 'q'
+        Loops until one of these is picked
+    """
     menu_prompt = 'Choose one: [I]mport pdf / [O]rder search / [Q]uit:  '
     menu_input = input(menu_prompt).lower()
-    while menu_input not in ('i', 'o', 'q'):
+    while not menu_regex.search(menu_input):
         print('\nInvalid choice!')
         menu_input = input(menu_prompt).lower()
     return menu_input
@@ -92,7 +102,7 @@ def find_order():
                 DATA_FILE, sep='|',
                 usecols=['ORDER_ID', 'DUNNING_NUM', 'FILE', 'PAGE'],
                 dtype={'ORDER_ID': str})
-            
+
             matches = matches[matches['ORDER_ID'] == ord_num]
             match_ct = len(matches)
             if match_ct == 0:
@@ -115,25 +125,20 @@ def find_order():
         print('No data.csv file found.  Import some data.')
 
 
-def print_order(file, start_page, order_id):
+def print_order(file_name, start_page, order_id):
     """Saves an order invoice as a pdf
-
-    
 
     Parameters
     ----------
-    file_loc : str
-        The file location of the spreadsheet
-    print_cols : bool, optional
-        A flag used to print the columns to the console (default is
-        False)
+    file_name : str
+        The name of the pdf containing the invoice as stored in /data/data.csv
+    start_page : int
+        The first page of the invoice in the pdf
+    order_id : str
+        The 15 digit order+line number
 
-    Returns
-    -------
-    list
-        a list of strings used that are the header columns
     """
-    full_file = PDF_PATH + 'BGE_DUNNING_' + file + '.DP.pdf'
+    full_file = PDF_PATH + 'BGE_DUNNING_' + file_name + '.DP.pdf'
     d_pdf = open(full_file, 'rb')
     pdf_reader = PyPDF2.PdfFileReader(d_pdf, strict=False, warndest=None)
     pdf_writer = PyPDF2.PdfFileWriter()
