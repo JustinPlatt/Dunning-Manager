@@ -82,13 +82,19 @@ def get_menu_choice():
 
 
 def get_order():
+    """Get an order number or return to main menu
+
+    Returns
+    -------
+    order_input : str
+        Returns 15 digit order id, 'b' or 'B'
+        Loops until one of these is picked
+    """
     order_prompt = '\nEnter a 15 digit order id, or [B] to go back:  '
     order_input = input(order_prompt)
     while not order_regex.search(order_input):
         print('\nInvalid choice!')
         order_input = input(order_prompt)
-        if order_input in ('b', 'B'):
-            break
     return str(order_input)
 
 
@@ -119,7 +125,7 @@ def find_order():
                 file = newest_match_data[2]
                 start_page = newest_match_data[3]
                 ord_num = newest_match_data[0]
-                #items = [order, dunning, file, page, file_date]
+                # items = [order, dunning, file, page, file_date]
                 print_order(file, start_page, ord_num)
     else:
         print('No data.csv file found.  Import some data.')
