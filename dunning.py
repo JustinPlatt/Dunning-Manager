@@ -3,6 +3,18 @@
 Created on Thu Feb 11 16:54:40 2021
 
 @author: Justin Platt
+
+package versions used:
+
+python - 3.8.3
+    glob
+    os
+    re
+    shutil
+    sys
+pandas - 1.0.5
+pyPDF2 - 1.26.0
+
 """
 
 import glob
@@ -14,14 +26,11 @@ from re import sub
 import shutil
 import sys
 
-ON_NETWORK = False  # change the paths used based on whether we're on network
-LAST_UPDATED = '3/8/2021'
-
-if ON_NETWORK:
-    ERT_PATH = r'//fs1.bgeltd.com/Proc/ERT_Reports/PR/ECS/PDF/'
-else:
-    ERT_PATH = './ert/'
-
+# globals
+LAST_UPDATED = '3/22/2021'
+ERT_PATH = ''  # updated in main()
+NETWORK_PDF_PATH = r'//fs1.bgeltd.com/Proc/ERT_Reports/PR/ECS/PDF/'
+LOCAL_PDF_PATH = './ert/'
 DATA_PATH = './data/'
 PDF_PATH = './pdfs/'
 VOD_PATH = './vods/'
@@ -45,6 +54,20 @@ get_fname = re.compile(r'\d[\d_]+')  # pulls unique part of filename
 order_regex = re.compile(r'^\d{15}$|^[bB]$')  # find 15 digit , 'b' or 'B'
 
 menu_regex = re.compile(r'^[ioqIOQ]$')  # find i/o/q in upper/lower case
+
+
+def get_ert_path():
+    if os.path.isdir(NETWORK_PDF_PATH):
+        print('Network PDF folder found...')
+        return NETWORK_PDF_PATH
+    elif os.path.isdir(LOCAL_PDF_PATH):
+        print('Local PDF folder found...')
+        return LOCAL_PDF_PATH
+    else:
+        print("Can't find local or network PDF folder.  Quitting.")
+        print("Network folder path: " + NETWORK_PDF_PATH)
+        print("Local folder path: " + LOCAL_PDF_PATH)
+        sys.exit()
 
 
 def get_file_list():
@@ -229,6 +252,8 @@ def import_check():
 
 def main():
     print('DUNNING INVOICE MANAGER - LAST UPDATED ' + LAST_UPDATED)
+    global ERT_PATH   # Needed to modify global copy of ERT_PATH
+    ERT_PATH = get_ert_path()
     while True:
         choice = get_menu_choice()
         if choice == 'i':               # import pdfs
