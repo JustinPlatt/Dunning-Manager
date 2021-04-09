@@ -80,7 +80,7 @@ def get_file_list():
         Returns [] if data.csv doesn't exist
     """
     if os.path.isfile(DATA_FILE):
-        cur_data = pd.read_csv(DATA_FILE, sep='|', dtype={'ORDER_ID': str})
+        cur_data = pd.read_csv(DATA_FILE, sep=',', dtype={'ORDER_ID': str})
         file_list = cur_data['FILE'].unique()
     else:
         file_list = []
@@ -128,7 +128,7 @@ def find_order():
             print('Returning to main menu...')
         else:
             matches = pd.read_csv(
-                DATA_FILE, sep='|',
+                DATA_FILE, sep=',',
                 usecols=['ORDER_ID', 'DUNNING_NUM', 'FILE', 'PAGE'],
                 dtype={'ORDER_ID': str})
 
@@ -209,11 +209,11 @@ def import_pdf(pdf_to_open):
     data_inv['TOTAL_DUE'] = data_inv['TOTAL_DUE'].astype(float)
     if os.path.isfile(DATA_FILE):  # look for data.csv - the . is for current dir
         print('Appending to data.csv')
-        prior_data = pd.read_csv(DATA_FILE, sep='|', dtype={'ORDER_ID': str})
+        prior_data = pd.read_csv(DATA_FILE, sep=',', dtype={'ORDER_ID': str})
         data_inv = prior_data.append(data_inv)
     else:
         print('No data.csv file found.  Creating now.')
-    data_inv.to_csv(DATA_FILE, index=False, sep='|')
+    data_inv.to_csv(DATA_FILE, index=False)
     print('Done.  File copied to ' + os.path.abspath(PDF_PATH))
 
 
